@@ -14,13 +14,19 @@ export class LeaderService {
     return LEADERS;
   }
 
-  getLeader(id:string):Leader {
-  return LEADERS.filter(leader => (leader.id === id))[0];
-  } 
+  getLeader(id:string): Promise<Leader> {
 
-
-  getFeaturedLeader(): Leader {
-    return LEADERS.filter( leader => leader.featured )[0];
+    return new Promise(resolve => {
+      setTimeout(()=>resolve(LEADERS.filter(leader => leader.id === id)[0]) ,2000);
+    });
   }
+
+
+  getFeaturedLeader(): Promise<Leader> {
+
+    return new Promise(resolve => {
+      setTimeout(()=>resolve(LEADERS.filter(leader => leader.featured)[0]),2000);
+      });
+    }
 
 }

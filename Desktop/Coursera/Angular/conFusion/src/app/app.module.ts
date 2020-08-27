@@ -14,6 +14,10 @@ import { MatCheckboxModule } from '@angular/material/checkbox';
 import { FlexLayoutModule } from '@angular/flex-layout';
 import { MatDialogModule } from '@angular/material/dialog';
 import { FormsModule } from '@angular/forms';
+import { ReactiveFormsModule } from '@angular/forms';
+import { MatSelectModule } from '@angular/material/select';
+import { MatSlideToggleModule } from '@angular/material/slide-toggle';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 
 import { AppRoutingModule } from './app-routing/app-routing.module';
 import { AppComponent } from './app.component';
@@ -63,7 +67,11 @@ import { LeaderService } from './services/leader.service';
     MatButtonModule,
     MatIconModule,
     FlexLayoutModule,
-    MatDialogModule
+    MatDialogModule,
+    ReactiveFormsModule,
+    MatSlideToggleModule,
+    MatSelectModule,
+    MatProgressSpinnerModule
   ],
 
   //We add this component for using the LoginComponent

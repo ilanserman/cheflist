@@ -13,12 +13,16 @@ export class PromotionService {
     return PROMOTIONS;
   }
 
-  getPromotion(id: String): Promotion {
-    return PROMOTIONS.filter((promo)=>{promo.id === id})[0];
+  getPromotion(id: String): Promise<Promotion> {
+    return new Promise(resolve => {
+      setTimeout(()=>resolve(PROMOTIONS.filter(promo => {promo.id === id})[0]),2000);
+    });
   }
 
-  getFeaturedPromotion(): Promotion {
-    return PROMOTIONS.filter((promo)=>promo.featured)[0];
+  getFeaturedPromotion(): Promise<Promotion> {
+    return new Promise(resolve => {
+      setTimeout(()=>resolve(PROMOTIONS.filter(promo=>promo.featured)[0]),2000);
+    });
   }
 
 }
