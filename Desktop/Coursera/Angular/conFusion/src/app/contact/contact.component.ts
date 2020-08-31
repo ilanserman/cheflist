@@ -11,7 +11,7 @@ export class ContactComponent implements OnInit {
 
   feedbackForm: FormGroup;
   feedback: Feedback;
-  contactType = ContactType;
+  contactType = ContactType
   @ViewChild('fform') feedbackFormDirective; //resets the form completely
 
 //must be named formErrors as per documentation

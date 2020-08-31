@@ -6,14 +6,14 @@
     fxLayoutGap="10px"
     fxLayoutGap.xs="0">
 
-  <div fxFlex="40" *ngIf="dish">
+  <div fxFlex="40" *ngIf="dish" [@visibility]="visibility">
     <mat-card>
     <mat-card-header>
       <mat-card-title>
         <h3 *ngIf="dish">{{ dish.name | uppercase }}</h3>
       </mat-card-title>
     </mat-card-header>
-    <img mat-card-image src={{dish.image}} alt={{dish.name}}>
+    <img mat-card-image src="{{BaseURL + dish.image}}" alt={{dish.name}}>
     <mat-card-content>
       <p>{{dish.description}}</p>
     </mat-card-content>
@@ -28,7 +28,7 @@
     </mat-card>
   </div>
 
-  <div fxFlex="40" *ngIf="dish">
+  <div fxFlex="40" *ngIf="dish" [@visibility]="visibility">
     <mat-list>
       <h3>Comments</h3>
       <mat-list-item *ngFor="let comment of dish.comments">
@@ -38,11 +38,51 @@
           <span>--{{comment.author}} {{comment.date | date}}</span>
         </p>
       </mat-list-item>
+      <mat-list-item *ngIf="dishForm.valid">
+        <h4 matLine>{{ dishForm.value.comment }}</h4>
+        <p matLine>{{ dishForm.value.rating }} Stars</p>
+        <p matLine>
+          <span>--{{dishForm.value.author}} {{ dishForm.value.date}}</span>
+        </p>
+      </mat-list-item>
     </mat-list>
-  </div>
 
-  <div fxFlex [hidden]="dish">
+    <div>
+      <form novalidate [formGroup]="dishForm" #dform="ngForm" (ngSubmit)="onSubmit()">
+        <div matLine>
+        <mat-form-field>
+          <input matInput formControlName="author" placeholder="Name" type="text" required>
+          <mat-error *ngIf="formErrors.author">
+            {{ formErrors.author }}
+          </mat-error>
+        </mat-form-field>
+        </div>
+        <div matLine>
+        <mat-slider formControlName="rating" min="1" max="5" step="1" tickInterval="1" thumbLabel value="5"></mat-slider>
+        </div>
+        <mat-form-field>
+          <textarea matInput formControlName="comment" placeholder="Your Comment"></textarea>
+          <mat-error *ngIf="formErrors.comment">
+            {{ formErrors.comment }}
+          </mat-error>
+        </mat-form-field>
+        <div matLine>
+        <button type="submit" mat-button class="background-primary text-floral-white" [disabled]="dishForm.invalid">Submit</button>
+        </div>
+
+      </form>
+    </div>
+
+
+  </div>
+  <div fxFlex [hidden]="dish || errMess">
     <mat-spinner></mat-spinner><h4>Loading . . . Please Wait</h4>
   </div>
+  <div fxFlex *ngIf="errMess">
+    <h2>Error</h2>
+    <h4>{{errMess}}</h4>
+  </div>
+
+
 
 </div>
