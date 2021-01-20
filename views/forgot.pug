@@ -1,0 +1,14 @@
+extends layout.pug
+
+block content
+  .jumbotron
+    form(name='forgotPwForm' method='POST')
+      legend Si olvidaste tu contraseña, ingresa tu correo electrónico.
+      .form-group
+        label(for='email') Ingresa tu correo electrónico:
+        input.form-control(type='email', name='email', value='', placeholder='Correo electrónico', autofocus=true required)
+      span(id='message')
+        p(class='font-weight-bold text-danger')
+
+      .form-group
+        button.btn.btn-primary(id='forgotPw-button' type='button') Enviar instrucciones

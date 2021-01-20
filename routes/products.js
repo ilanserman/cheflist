@@ -1,4 +1,4 @@
-var authenticate = require('../authenticate');
+const authenticate = require('../authenticate');
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('./cors');
@@ -12,24 +12,23 @@ router.use(express.urlencoded({ extended: false }));
 router.route('/')
 .options(cors.corsWithOptions, (req, res) => { res.sendStatus(200); })
 .get(cors.corsWithOptions, (req,res,next) => {
-  res.statusCode = 403;
-  res.end('GET NOT IMPLEMENTED ON /products/');
+  Products.find({})
+  .then( (products) =>{
+    res.status(200).json(products);
+  }, (err)=>next(err)).catch((err)=>next(err));
 })
-.push(cors.corsWithOptions, authenticate.verifyUser, authenticate.verifySupplier, (req,res,next) => {
-  if (req.body.name)
-  name = req.body.name;
-  if (req.body.mus)
-  name = req.body.mus;
-  if (req.body.musDescription)
-  name = req.body.musDescription;
-  if (req.body.temperature)
-  name = req.body.temperature;
-  if (req.body.grossPrice)
-  name = req.body.grossPrice;
-  if (req.body.saleByUnit)
-  name = req.body.saleByUnit;
-
-  product = new Product()
+.post(cors.corsWithOptions, authenticate.verifyUser, authenticate.verifyAdmin, (req,res,next) => {
+  let prod = {
+    "name": req.body.name,
+    "grossPrice": req.body.grossPrice,
+    "supplier": mongoose.Types.ObjectId(req.body.supplierId),
+  };
+  Products.create(prod, (err,product) => {
+    console.log("product: " + prod);
+    if(err)
+      res.status(500).json(err);
+    res.status(200).json(product);
+  })
 })
 .put(cors.corsWithOptions, (req,res,next) => {
   res.statusCode = 403;
@@ -37,14 +36,42 @@ router.route('/')
 })
 .delete(cors.corsWithOptions, (req,res,next) => {
   res.statusCode = 403;
-  res.end('GET NOT IMPLEMENTED ON /products/');
+  res.end('DELETE NOT IMPLEMENTED ON /products/');
 })
 
-products.route('/:productId')
+router.route('/insertmany')
 .options(cors.corsWithOptions, (req, res) => { res.sendStatus(200); })
-.get()
-.push()
-.put()
-.delete()
+.get(cors.corsWithOptions, authenticate.verifyUser, authenticate.verifyAdmin, (req,res,next) => {
+  res.status(400).send('GET NOT IMPLEMENTED ON /products/insertMany');
+})
+.put(cors.corsWithOptions, authenticate.verifyUser, authenticate.verifyAdmin, (req,res,next) => {
+  res.status(400).send('PUT NOT IMPLEMENTED ON /products/insertMany');
+})
+.post(cors.corsWithOptions, authenticate.verifyUser, authenticate.verifyAdmin,(req,res,next) => {
+  Products.insertMany(req.body, (err,products) => {
+    if(err) next(err)
+    return res.status(200).json(products);
+  })
+})
+
+
+router.route('/:productId')
+.options(cors.corsWithOptions, (req, res) => { res.sendStatus(200); })
+.get(cors.cors, (req,res,next) => {
+  Products.findById(req.params.productId)
+  .then((product) => {
+    res.status(200).json(product);
+    }, (err) => next(err))
+    .catch((err) => next(err));
+});
+
+router.route('/supplier/:supplierId')
+.options(cors.corsWithOptions, (req, res) => { res.sendStatus(200); })
+.get(cors.cors, (req,res,next) => {
+  Products.find( { supplier: { $eq:mongoose.Types.ObjectId(req.params.supplierId) } }, (err,products) => {
+    if(err) res.status(500).send('error');
+    res.status(200).json(products);
+  })
+})
 
 module.exports = router;

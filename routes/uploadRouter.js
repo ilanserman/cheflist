@@ -35,8 +35,7 @@ uploadRouter.use(express.urlencoded({ extended: false }));
 uploadRouter.route('/')
 //.options(cors.corsWithOptions, (req, res) => { res.sendStatus(200); })
 .get(cors.cors, (req, res, next) => {
-  res.statusCode = 403;
-  res.end('GET operation not supported on /imageUpload');
+  res.status(405).send('405: Method not allowed!');
 })
 .post(upload.single('imageFile'), (req, res) => {
   console.log("post method");
@@ -45,12 +44,10 @@ uploadRouter.route('/')
   res.json(req.file);
 })
 .put(cors.corsWithOptions, authenticate.verifyUser, authenticate.verifyAdmin, (req, res, next) => {
-  res.statusCode = 403;
-  res.end('PUT operation not supported on /imageUpload');
+    res.status(405).send('405: Method not allowed!');
 })
 .delete(cors.corsWithOptions, authenticate.verifyUser, authenticate.verifyAdmin, (req, res, next) => {
-  res.statusCode = 403;
-  res.end('DELETE operation not supported on /imageUpload');
+    res.status(405).send('405: Method not allowed!');
 });
 
 module.exports = uploadRouter;

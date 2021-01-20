@@ -10,7 +10,9 @@ const subcategorySchema = new Schema({
     maxlength: 100
   },
   category: {
-    type: mongoose.Schema.Types.ObjectId , ref: 'Category' 
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Category',
+    required: true
   }
 });
 

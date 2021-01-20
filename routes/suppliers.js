@@ -1,4 +1,6 @@
 var Users = require('../models/user');
+var Suppliers = require('../models/supplier');
+const Products = require('../models/product');
 var authenticate = require('../authenticate');
 const express = require('express');
 const mongoose = require('mongoose');
@@ -8,9 +10,6 @@ var passwordValidator = require('password-validator');
 const crypto = require('crypto');
 const mime = require('mime');
 const multer = require('multer');
-
-const Suppliers = require('../models/supplier');
-const Categories = require('../models/category');
 
 const supplierRouter = express.Router();
 
@@ -42,7 +41,7 @@ const uploadRouter = express.Router();
 supplierRouter.route('/')
 .options(cors.corsWithOptions, (req, res) => { res.sendStatus(200); })
 .get(cors.cors, (req,res,next) => {
-  Suppliers.find(req.query)
+  Suppliers.find({})
   .then( (suppliers) =>{
     res.statusCode = 200;
     res.setHeader('Content-type','application/json');
@@ -51,19 +50,15 @@ supplierRouter.route('/')
 })
 
 supplierRouter.route('/:supplierId')
-.options(cors.corsWithOptions, (req, res) => { res.sendStatus(200); })
+.options(cors.corsWithOptions,(req, res) => { res.sendStatus(200); })
 .get(cors.cors, (req,res,next) => {
-  Suppliers.findById(req.params.supplierId)
-  .populate('products')
-  .then((products) => {
-    res.statusCode = 200;
-    res.setHeader('Content-Type', 'application/json');
-    res.json(products);
-    }, (err) => next(err))
-    .catch((err) => next(err));
+  Suppliers.findById(req.params.supplierId, (err,supplier) => {
+    if(err) res.status(500).send('unknown error');
+    return res.status(200).json(supplier);
   })
-.put(cors.corsWithOptions, upload.single('imageFile'), (req,res,next) => {
-  Suppliers.findById(req.params.supplierId, (err, supplier) => {
+})
+.put(cors.corsWithOptions, authenticate.verifyUser, authenticate.verifyAdmin, upload.single('imageFile'), (req,res,next) => {
+  Users.findById(req.params.supplierId, (err, supplier) => {
     if(supplier != null) {
       if (req.body)
       supplier.tradeName = req.body.tradeName;
@@ -84,41 +79,43 @@ supplierRouter.route('/:supplierId')
 supplierRouter.route('/:supplierId/products')
 .options(cors.corsWithOptions, (req, res) => { res.sendStatus(200); })
 .get(cors.cors, (req,res,next) => {
-  Suppliers.findById(req.params.supplierId, (err,supplier) => {
-    if( supplier != null ) {
-
-    }
+  Products.find( { supplier: { $eq:mongoose.Types.ObjectId(req.params.supplierId) } }, (err,products) => {
+    if(err) res.status(500).send('error');
+    res.status(200).json(products);
   })
 })
-.put(cors.corsWithOptions, (req,res,next) => {
+.put(cors.corsWithOptions, authenticate.verifyUser, authenticate.verifyAdmin, (req,res,next) => {
   res.statusCode = 403;
-  res.end('NOT IMPLEMENTED ON /suppliers/'+ req.params.supplierId);
-  //MUST IMPLEMENT THIS!
+  res.end('PUT NOT IMPLEMENTED ');
 })
-.post(cors.corsWithOptions, (req,res,next) => {
-  Suppliers.findById(req.params.supplierId, (err,supplier) => {
-    if( supplier != null ) {
-      for(let i = 0 ; i < req.body.length ; i++) {
-          supplier.products.push( req.body[i] );
-      }
-      supplier.save()
-      .then((supplier) => {
-        res.statusCode = 200;
-        res.setHeader('Content-Type', 'application/json');
-        res.json(supplier);
-      })
-    }
-  })
+
+//Add products to products model and then add to productlist array in Supplier model
+.post(cors.corsWithOptions, authenticate.verifyUser, authenticate.verifyAdmin,(req,res,next) => {
+  let products = req.body;
+  console.log(products)
+  for(product of products) {
+    console.log(product);
+    Products.create({
+      name: product.name,
+      grossPrice: product.grossPrice,
+      supplier: mongoose.Types.ObjectId(req.params.supplierId)
+    }, (err,prod) => {
+      if(err) next(err);
+      res.status(200).json(prod);
+    })
+  }
 })
 .delete(cors.corsWithOptions, (req,res,next) => {
   res.statusCode = 403;
   res.end('NOT IMPLEMENTED ON /dishes/'+ req.params.supplierId);
 });
 
+
 supplierRouter.route('/:supplierId/products/:productId')
 .options(cors.corsWithOptions, (req, res) => { res.sendStatus(200); })
+/* KEEP THIS LINE, ID IS METHOD IS INTERESTING
 .get(cors.cors, (req,res,next) => {
-  Suppliers.findById(req.params.supplierId, (err,supplier) => {
+  Users.findById(req.params.supplierId, (err,supplier) => {
     if( supplier != null ) {
         product = supplier.products.id(req.params.productId); //.id method returns a value, not a promise
         res.statusCode = 200;
@@ -127,9 +124,9 @@ supplierRouter.route('/:supplierId/products/:productId')
       }
     })   .catch((err)=>next(err));
   })
-
+*/
 .put(cors.corsWithOptions, (req, res, next) => {
-  Suppliers.findByIdAndUpdate(req.params.supplierId , (err,supplier) => {
+  Users.findByIdAndUpdate(req.params.supplierId , (err,supplier) => {
     if(supplier != null) {
       if (req.body.name)
       supplier.products.id(req.params.productId).name = req.body.name;
@@ -155,7 +152,7 @@ supplierRouter.route('/:supplierId/products/:productId')
   },(err)=>next(err)).catch((err)=>next(err));
 })
 .delete(cors.corsWithOptions, (req, res, next) => {
-  Suppliers.findById(req.params.supplierId, (err,supplier) => {
+  Users.findById(req.params.supplierId, (err,supplier) => {
     if( supplier.user.equals(req.user._id) && supplier != null && supplier.products.id(req.params.productId) != null) {
       supplier.products.id(req.params.commentId).remove();
       supplier.save()
@@ -178,21 +175,5 @@ supplierRouter.route('/:supplierId/products/:productId')
   }, (err) => next(err))
     .catch((err) => next(err))
 });
-
-//Categories route
-supplierRouter.route('/:supplierId/category/:categoryId')
-.options(cors.corsWithOptions, (req, res) => { res.sendStatus(200); })
-.get(cors.cors, (req,res,next) => {
-  Suppliers.findById(req.params.supplierId, (err,supplier) => {
-    .populate('products')
-    .then((products) => {
-
-    })
-  })
-});
-
-
-
-
 
 module.exports = supplierRouter;

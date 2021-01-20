@@ -1,0 +1,17 @@
+extends layout.pug
+
+block content
+  .jumbotron
+    form(name='changePwForm' method='POST')
+      legend Reestablecer contraseña
+      .form-group
+        label(for='password') Nueva contraseña
+        input.form-control(type='password', name='password', value='', placeholder='Nueva contraseña', autofocus=true required)
+      .form-group
+        label(for='confirm') Confirmar contraseña
+        input.form-control(type='password', name='repeatPassword', value='', placeholder='Confirmar contraseña' required)
+      span(id='message')
+        p(class='font-weight-bold text-danger')
+
+      .form-group
+        button.btn.btn-primary(id='resetPw-button' type='button') Cambiar contraseña

@@ -1,7 +1,5 @@
 const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
-require('mongoose-currency').loadType(mongoose);
-const Currency = mongoose.Types.Currency;
 
 const supplierSchema = new Schema({
   user: {
@@ -15,11 +13,20 @@ const supplierSchema = new Schema({
     type: String,
     default: ""
   },
-  products: [productSchema]
-},{
-  timestamps: true
-}
-)
+  phoneNumber: {
+    type: String,
+    default: ""
+  },
+  email: {
+    type: String,
+    default: ""
+  },
+  address: {
+    type: String,
+    default: ""
+  },
 
-const Supplier = mongoose.model('Supplier', supplierSchema);
+});
+
+var Supplier = mongoose.model('Supplier', supplierSchema);
 module.exports = Supplier;
