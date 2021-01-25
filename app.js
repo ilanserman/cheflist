@@ -36,7 +36,7 @@ const url = config.mongoUrl;
 const connect = mongoose.connect(url);
 
 connect.then((db)=> {
-    console.log('Connected correctly to the database server');
+    console.log('Mongoose: Connected correctly to the database server');
 }, (err) => {console.log("err: " + err);})
 
 const accessLogStream = rfs.createStream('access.log', {
