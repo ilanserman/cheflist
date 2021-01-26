@@ -1,3 +1,6 @@
+//Simple NodeJS app for detecting and applying changes in collection in MongoDB with ElasticSearch in real time
+//Later implement tokens for resuming in case something failed
+
 const config = require('../config');
 const MongoClient = require("mongodb").MongoClient
 const { Client } = require('@elastic/elasticsearch')
@@ -17,11 +20,10 @@ async function init() {
 
   if (!mongoclient)
     return console.log('No client');
-    
+
   try {
 
     const db = mongoclient.db('cheflist');
-    //const collection = db.collection('products');
     await db.command({ ping:1 })
     console.log("MongoDB ElasticSearch sync: connected MongoDB server")
 
