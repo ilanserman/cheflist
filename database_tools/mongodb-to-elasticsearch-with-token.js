@@ -1,88 +1,103 @@
 const config = require('../config');
-const { MongoClient } = require("mongodb");
+const MongoClient = require("mongodb").MongoClient
+const { Client } = require('@elastic/elasticsearch')
 
-const mongoClient = new MongoClient(config.mongoUrl, { useUnifiedTopology: true });
+const esclient = new Client({
+  node: config.elasticsearchUrl,
+  auth: {
+    username: 'cheflist',
+    password: 'Elastic$1'
+  }
+})
+
 
 async function init() {
-  // Connect the client to the server
-  await mongoClient.connect();
-  // Establish and verify connection
-  await mongoClient.db("cheflist").command({ ping: 1 });
-  console.log("MongoDB ElasticSearch sync: Connected successfully to MongoDB server");
-  
-  async function getUpsertChangeStream() {
-    const changeStream = (await getCollection("somecollection")).watch([
-      {
-        "$match": {
-          "operationType": {
-            "$in": ["insert", "update", "replace"]
+  const mongoclient = await MongoClient.connect(config.mongoUrl, { useUnifiedTopology: true })
+  .catch(err => { console.log(err); });
+
+  if (!mongoclient)
+    return console.log('No client');
+    
+  try {
+
+    const db = mongoclient.db('cheflist');
+    //const collection = db.collection('products');
+    await db.command({ ping:1 })
+    console.log("MongoDB ElasticSearch sync: connected MongoDB server")
+
+    //Wait for changes with operations insert, update or replace and update ES database
+    async function getUpsertChangeStream() {
+      const changeStream = (await db.collection('products')).watch([
+        {
+          "$match": {
+            "operationType": {
+              "$in": ["insert", "update", "replace"]
+            }
+          }
+        },
+        {
+          "$project": {
+            "documentKey": false
           }
         }
-      },
-      {
-        "$project": {
-          "documentKey": false
-        }
-      }
-    ], {"fullDocument": "updateLookup"});
+      ], {"fullDocument": "updateLookup"});
+      return changeStream;
+    }
 
-    return changeStream;
-  }
-
-  async function getDeleteChangeStream() {
-    const changeStream = (await getCollection("someCollection")).watch([
-      {
-        "$match": {
-          "operationType": {
-            "$in": ["delete"]
+    async function getDeleteChangeStream() {
+      const changeStream = (await db.collection('products')).watch([
+        {
+          "$match": {
+            "operationType": {
+              "$in": ["delete"]
+            }
+          }
+        },
+        {
+          "$project": {
+            "documentKey": true
           }
         }
-      },
-      {
-        "$project": {
-          "documentKey": true
-        }
-      }
-    ]);
+      ]);
+      return changeStream;
+    }
 
-    return changeStream;
+    const upsertChangeStream = await getUpsertChangeStream();
+    upsertChangeStream.on("change", async change => {
+      console.log("Pushing document to Elasticsearch, id:", change.fullDocument._id);
+      change.fullDocument.id = change.fullDocument._id;
+      Reflect.deleteProperty(change.fullDocument, "_id");
+      const response = await esclient.index({
+        "id": change.fullDocument.id,
+        "index": "products",
+        "body": change.fullDocument,
+        "type": "doc"
+      });
+      console.log("Document upserted, status code:", response.statusCode);
+    });
+    upsertChangeStream.on("error", error => {
+      console.error(error);
+    });
+
+
+    const deleteChangeStream = await getDeleteChangeStream();
+    deleteChangeStream.on("change", async change => {
+      console.log("Deleting data from ElasticSearch, id", change.documentKey._id);
+      const response = await esclient.delete({
+        "id": change.documentKey._id,
+        "index": "products",
+        "type": "doc"
+      });
+      console.log("Document successsfully deleted, status code: ", response.statusCode);
+    });
+    deleteChangeStream.on("error", error => {
+      console.error(error);
+    });
+
+  } catch(err) {
+    console.log(err);
   }
 
-  //Wait for changes with operations insert, update or replace and update ES database
-  const upsertChangeStream = await getUpsertChangeStream();
-  upsertChangeStream.on("change", async change => {
-    console.log("Pushing data to elasticsearch with id", change.fullDocument._id);
-    change.fullDocument.id = change.fullDocument._id;
-    Reflect.deleteProperty(change.fullDocument, "_id");
-    const response = await client.index({
-      "id": change.fullDocument.id,
-      "index": "someindexname",
-      "body": change.fullDocument,
-      "type": "doc"
-    });
-    console.log("document upserted successsfully with status code", response.statusCode);
-  });
-
-  upsertChangeStream.on("error", error => {
-    console.error(error);
-  });
-
-  //Wait for changes with delete operation and update ES database
-  const deleteChangeStream = await getDeleteChangeStream();
-  deleteChangeStream.on("change", async change => {
-    console.log("Deleting data from elasticsearch with id", change.documentKey._id);
-    const response = await client.delete({
-      "id": change.documentKey._id,
-      "index": "someindex",
-      "type": "doc"
-    });
-    console.log("document deleted successsfully with status code", response.statusCode);
-  });
-
-  deleteChangeStream.on("error", error => {
-    console.error(error);
-  });
 }
 
-//Initialize connection to databases and watch and update
 init();
