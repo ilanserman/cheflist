@@ -1,9 +1,21 @@
+const config = require('../config');
 const authenticate = require('../authenticate');
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('./cors');
 const Products = require('../models/product');
 const escapeStringRegexp = require('escape-string-regexp');
+const Client = require('@elastic/elasticsearch');
+
+const esclient = new Client({
+  node: config.elasticsearchUrl,
+  auth: {
+    username: config.elasticsearch.username,
+    password: config.elasticsearch.password
+  }
+});
+
+
 
 const router = express.Router();
 
@@ -32,6 +44,33 @@ router.route('/')
 .delete(cors.corsWithOptions, (req,res,next) => {
   return res.status(403).send('DELETE operation not supported on /search/');
 })
+
+router.route('/es')
+.options(cors.corsWithOptions, authenticate.verifyUser, (req, res) => { res.sendStatus(200); })
+.get(cors.corsWithOptions, (req,res,next) => {
+  let query = escapeStringRegexp(req.query.q);
+  if(query === "")
+    return res.status(400).json({status: 'no empty queries allowed',success: false});
+
+    esclient.search({
+      index: 'my-index',
+      from: 20,
+      size: 10,
+      body: { foo: 'bar' }
+    }, {
+      ignore: [404],
+      maxRetries: 3
+    }, (err, result) => {
+      if (err) console.log(err)
+      return result;
+    })
+
+});
+
+
+
+
+
 
 //https://www.codegrepper.com/code-examples/javascript/express+get+query+params+from+url
 //FOR USING QUERY!!!!

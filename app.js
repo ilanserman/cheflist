@@ -24,6 +24,8 @@ const productsRouter = require('./routes/products');
 const testRouter = require('./routes/test');
 const favoritesRouter = require('./routes/favorites');
 const searchRouter = require('./routes/search');
+const quotationsRouter = require('./routes/quotations');
+
 
 const config = require('./config');
 
@@ -99,6 +101,7 @@ app.use('/api/products', productsRouter);
 app.use('/api/test', testRouter);
 app.use('/api/favorites', favoritesRouter);
 app.use('/api/search', searchRouter);
+app.use('/api/quotations', quotationsRouter);
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
