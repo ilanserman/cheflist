@@ -134,13 +134,13 @@ router.route('/forgotpassword.html')
           return res.status(200).json({response:`Se ha enviado un email a ${req.body.email} con las instrucciones`});
         //Create email with token
         var transportSettings = {
-          host: "smtp.gmail.com",
-          port: 587,
+          host: "xxxx",
+          port: 0,
           secure: false,
-          requireTLS: true,
+          requireTLS: false,
           auth: {
-            user: "getcheflist@gmail.com",
-            pass: "polloteriyaki1234"
+            user: "xxxx",
+            pass: "xxxx"
           }
         };
 
